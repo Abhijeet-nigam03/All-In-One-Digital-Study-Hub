@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { Timer, CheckCircle, BookOpen, Clock, PlayCircle } from "lucide-react"
 import { FloatingShapes } from "@/components/3d/floating-shapes"
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive"
+import { DynamicGreeting } from "@/components/dashboard/dynamic-greeting"
 
 import { cookies } from "next/headers"
 
@@ -25,9 +26,8 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Good Morning, {displayName} 👋
-        </h1>
+        <DynamicGreeting name={displayName} />
+
         <p className="text-muted-foreground">
           {format(today, "EEEE, MMMM d")} • Let&apos;s make today productive.
         </p>
