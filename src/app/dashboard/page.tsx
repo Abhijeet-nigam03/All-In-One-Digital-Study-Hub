@@ -1,0 +1,41 @@
+import { createClient } from "@/lib/supabase/server"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { format } from "date-fns"
+import { Timer, CheckCircle, BookOpen, Clock, PlayCircle } from "lucide-react"
+import { FloatingShapes } from "@/components/3d/floating-shapes"
+import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive"
+
+import { cookies } from "next/headers"
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  const cookieStore = await cookies()
+  const guestName = cookieStore.get('guest_name')?.value
+  
+  const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || guestName || 'Student'
+
+  // In a real app, we would fetch this data from Supabase
+  const today = new Date()
+  const currentStreak = 7
+  const studyHours = 4.5
+  const completedTasks = 3
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Good Morning, {displayName} 👋
+        </h1>
+        <p className="text-muted-foreground">
+          {format(today, "EEEE, MMMM d")} • Let&apos;s make today productive.
+        </p>
+      </div>
+
+
+
+      <DashboardInteractive />
+    </div>
+  )
+}
