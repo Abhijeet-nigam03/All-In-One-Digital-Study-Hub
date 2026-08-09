@@ -14,7 +14,6 @@ export async function searchYouTube(query: string): Promise<YouTubeSearchResult[
   try {
     if (!query || query.trim() === "") return []
     
-    // Check if the user is already asking for an educational term
     const lowerQuery = query.toLowerCase()
     const isEducational = lowerQuery.includes("tutorial") || 
                           lowerQuery.includes("course") || 
@@ -22,20 +21,30 @@ export async function searchYouTube(query: string): Promise<YouTubeSearchResult[
                           lowerQuery.includes("explained") ||
                           lowerQuery.includes("learn")
                           
-    // Append educational keywords if not already present
     const finalQuery = isEducational ? query : `${query} tutorial OR lecture OR course`
+    const apiKey = process.env.YOUTUBE_API_KEY
 
-    const results = await ytSearch(finalQuery)
+    // Fallback if no API key is provided
+    if (!apiKey) {
+      console.warn("YOUTUBE_API_KEY is not set. Returning mock results.")
+      return [
+        { id: "jfKfPfyJRdk", title: "lofi hip hop radio 📚 - beats to relax/study to", channel: "Lofi Girl", thumbnail: "https://i.ytimg.com/vi/jfKfPfyJRdk/hqdefault.jpg", category: "Study Music" },
+        { id: "8hly31xKli0", title: "Algorithms and Data Structures Tutorial", channel: "freeCodeCamp.org", thumbnail: "https://i.ytimg.com/vi/8hly31xKli0/hqdefault.jpg", category: "Computer Science" },
+        { id: "v68zYyaEmEA", title: "Study With Me - 2 Hour Pomodoro", channel: "Study Vibes", thumbnail: "https://i.ytimg.com/vi/v68zYyaEmEA/hqdefault.jpg", category: "Pomodoro" }
+      ]
+    }
+
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(finalQuery)}&type=video&key=${apiKey}`, { next: { revalidate: 3600 } })
+    const data = await res.json()
     
-    if (!results || !results.videos) return []
+    if (!data.items) return []
     
-    // Format the first 15 results
-    return results.videos.slice(0, 15).map(video => ({
-      id: video.videoId,
-      title: video.title,
-      channel: video.author.name,
-      thumbnail: video.thumbnail || "",
-      category: "YouTube Search" // yt-search doesn't provide strict categories by default
+    return data.items.map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails.high.url,
+      category: "YouTube Search"
     }))
   } catch (error) {
     console.error("YouTube search error:", error)
@@ -56,19 +65,27 @@ const EDUCATIONAL_TOPICS = [
 
 export async function getRecommendations(): Promise<YouTubeSearchResult[]> {
   try {
-    // Pick a random topic
     const randomTopic = EDUCATIONAL_TOPICS[Math.floor(Math.random() * EDUCATIONAL_TOPICS.length)]
+    const apiKey = process.env.YOUTUBE_API_KEY
+
+    // Fallback if no API key is provided
+    if (!apiKey) {
+      return [
+        { id: "jfKfPfyJRdk", title: "lofi hip hop radio 📚 - beats to relax/study to", channel: "Lofi Girl", thumbnail: "https://i.ytimg.com/vi/jfKfPfyJRdk/hqdefault.jpg", category: "Study Music" },
+        { id: "8hly31xKli0", title: "Algorithms and Data Structures Tutorial", channel: "freeCodeCamp.org", thumbnail: "https://i.ytimg.com/vi/8hly31xKli0/hqdefault.jpg", category: "Computer Science" },
+        { id: "v68zYyaEmEA", title: "Study With Me - 2 Hour Pomodoro", channel: "Study Vibes", thumbnail: "https://i.ytimg.com/vi/v68zYyaEmEA/hqdefault.jpg", category: "Pomodoro" }
+      ]
+    }
     
-    const results = await ytSearch(randomTopic)
-    if (!results || !results.videos) return []
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=6&q=${encodeURIComponent(randomTopic)}&type=video&key=${apiKey}`, { next: { revalidate: 3600 } })
+    const data = await res.json()
+    if (!data.items) return []
     
-    // Return 3-5 random videos from the search results
-    const shuffled = results.videos.sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, 6).map(video => ({
-      id: video.videoId,
-      title: video.title,
-      channel: video.author.name,
-      thumbnail: video.thumbnail || "",
+    return data.items.map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails.high.url,
       category: "Recommended"
     }))
   } catch (error) {
