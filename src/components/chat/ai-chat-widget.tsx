@@ -6,30 +6,51 @@ import { MessageSquare, X, Send, Bot, User, Minimize2, Maximize2 } from "lucide-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useChat } from "@ai-sdk/react"
+import type { UIMessage } from "ai"
 import ReactMarkdown from "react-markdown"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import rehypeRaw from "rehype-raw"
 import "katex/dist/katex.min.css"
-const INITIAL_MESSAGES: any[] = [
+
+const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "Hi! I'm your Study-Hub AI powered by Google Gemini. Ask me anything!"
+    parts: [
+      {
+        type: "text",
+        text: "Hi! I'm your Study-Hub AI powered by Google Gemini. Ask me anything!"
+      }
+    ]
   }
 ];
+
+function getMessageText(msg: any): string {
+  if (typeof msg.content === 'string' && msg.content) {
+    return msg.content;
+  }
+  if (Array.isArray(msg.parts)) {
+    return msg.parts
+      .filter((p: any) => p && (p.type === 'text' || typeof p.text === 'string'))
+      .map((p: any) => p.text || '')
+      .join('');
+  }
+  return '';
+}
 
 export function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [localInput, setLocalInput] = useState("")
+  const [chatError, setChatError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, status, sendMessage } = useChat({
     messages: INITIAL_MESSAGES,
     onError: (err) => {
       console.error("Chat Error:", err);
-      alert(err.message || "Failed to send message. Did you add your Gemini API Key?");
+      setChatError(err.message || "Failed to receive response from Gemini.");
     }
   });
 
@@ -44,10 +65,10 @@ export function AIChatWidget() {
     const messageContent = localInput.trim();
     if (!messageContent || isLoading) return;
     
+    setChatError(null);
     sendMessage({
-      role: 'user',
-      content: messageContent
-    } as any);
+      text: messageContent
+    });
     setLocalInput('');
   };
 
@@ -150,10 +171,10 @@ export function AIChatWidget() {
                             remarkPlugins={[remarkMath]} 
                             rehypePlugins={[rehypeRaw, rehypeKatex]}
                           >
-                            {(msg as any).content || (msg.parts ? msg.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('') : '')}
+                            {getMessageText(msg)}
                           </ReactMarkdown>
                         ) : (
-                          (msg as any).content || (msg.parts ? msg.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('') : '')
+                          getMessageText(msg)
                         )}
                       </div>
                     </div>
@@ -168,6 +189,11 @@ export function AIChatWidget() {
                         <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce delay-75" />
                         <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce delay-150" />
                       </div>
+                    </div>
+                  )}
+                  {chatError && (
+                    <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+                      {chatError}
                     </div>
                   )}
                   <div ref={messagesEndRef} />
