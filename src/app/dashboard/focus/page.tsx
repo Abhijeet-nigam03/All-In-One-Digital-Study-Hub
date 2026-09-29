@@ -45,22 +45,27 @@ export default function FocusWorkspacePage() {
 
   const fetchPdfs = async () => {
     setIsLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('pdf_files')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        setPdfs(data)
+      }
+    } catch (err) {
+      console.error("Failed to load PDFs in focus mode:", err)
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    const { data, error } = await supabase
-      .from('pdf_files')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setPdfs(data)
-    }
-    setIsLoading(false)
   }
 
   const toggleFullscreen = () => {

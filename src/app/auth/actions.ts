@@ -6,15 +6,15 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export async function guestLogin(formData: FormData) {
-  const username = formData.get('username') as string
-  if (!username) {
-    redirect('/login?error=Username is required for guest access')
-  }
+  const rawName = formData.get('username') as string | null
+  const username = rawName && rawName.trim() ? rawName.trim() : 'Guest Student'
   
   const cookieStore = await cookies()
   cookieStore.set('guest_name', username, { 
     path: '/', 
-    maxAge: 60 * 60 * 24 * 7 // 1 week
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
   })
   
   revalidatePath('/dashboard', 'layout')
@@ -69,8 +69,12 @@ export async function signup(formData: FormData) {
 }
 
 export async function logout() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  try {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+  } catch (err) {
+    console.error("Logout error:", err)
+  }
   
   const cookieStore = await cookies()
   cookieStore.delete('guest_name')

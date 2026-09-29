@@ -1,8 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { Environment, Float, Sphere, MeshDistortMaterial } from "@react-three/drei"
+import { Float, Sphere, MeshDistortMaterial } from "@react-three/drei"
 import * as THREE from "three"
 
 function AnimatedBlob() {
@@ -39,7 +39,6 @@ function AnimatedBlob() {
           metalness={0.8}
           clearcoat={1}
           clearcoatRoughness={0.1}
-          envMapIntensity={2}
         />
       </Sphere>
     </Float>
@@ -47,14 +46,24 @@ function AnimatedBlob() {
 }
 
 export function Hero3D() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen pointer-events-auto" />
+  }
+
   return (
     <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen pointer-events-auto">
       <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[2, 2, 5]} intensity={1.5} color="#3b82f6" />
-        <pointLight position={[-2, -2, -2]} intensity={2} color="#ef4444" />
-        <pointLight position={[2, -2, 2]} intensity={2} color="#eab308" />
-        <Environment preset="city" />
+        <ambientLight intensity={0.7} />
+        <hemisphereLight args={["#3b82f6", "#0f172a", 0.8]} />
+        <directionalLight position={[2, 2, 5]} intensity={1.8} color="#3b82f6" />
+        <pointLight position={[-2, -2, -2]} intensity={2.5} color="#ef4444" />
+        <pointLight position={[2, -2, 2]} intensity={2.5} color="#eab308" />
         
         {/* Main interactive blob in the center */}
         <AnimatedBlob />

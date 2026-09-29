@@ -33,26 +33,30 @@ export default function LibraryPage() {
 
   const fetchPdfs = async () => {
     setIsLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('pdf_files')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error("PDF fetch error:", error)
+      } else {
+        setPdfs(data || [])
+      }
+    } catch (err) {
+      console.error("Failed to load PDFs:", err)
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    const { data, error } = await supabase
-      .from('pdf_files')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      alert("Failed to load PDFs")
-      console.error(error)
-    } else {
-      setPdfs(data || [])
-    }
-    setIsLoading(false)
   }
 
   const formatFileSize = (bytes: number) => {

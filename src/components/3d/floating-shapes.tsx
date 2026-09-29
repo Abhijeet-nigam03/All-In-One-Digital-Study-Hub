@@ -1,8 +1,8 @@
 "use client"
 
-import { useRef, useMemo } from "react"
+import { useRef, useMemo, useState, useEffect } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { Float, Environment } from "@react-three/drei"
+import { Float } from "@react-three/drei"
 import * as THREE from "three"
 
 function Shape({ position, color, geometryType, scale = 1 }: { position: [number, number, number], color: string, geometryType: "sphere" | "torus" | "icosahedron", scale?: number }) {
@@ -45,13 +45,23 @@ function Shape({ position, color, geometryType, scale = 1 }: { position: [number
 }
 
 export function FloatingShapes() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div className="absolute inset-0 z-0 pointer-events-none" />
+  }
+
   return (
     <div className="absolute inset-0 z-0 pointer-events-none">
       <Canvas camera={{ position: [0, 0, 10], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 10]} intensity={1} color="#ffffff" />
-        <directionalLight position={[-10, -10, -10]} intensity={0.5} color="#6366f1" />
-        <Environment preset="city" />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[10, 10, 10]} intensity={1.5} color="#ffffff" />
+        <directionalLight position={[-10, -10, -10]} intensity={0.8} color="#6366f1" />
+        <pointLight position={[0, 5, 5]} intensity={1} color="#38bdf8" />
         
         <Shape position={[-4, 2, -5]} color="#3b82f6" geometryType="icosahedron" scale={1.5} />
         <Shape position={[5, -3, -8]} color="#eab308" geometryType="torus" scale={2} />

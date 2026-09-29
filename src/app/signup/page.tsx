@@ -100,8 +100,7 @@ export default async function SignupPage({
                       id="username"
                       name="username"
                       type="text"
-                      placeholder="Enter a guest name"
-                      required
+                      placeholder="Enter a guest name (optional)"
                     />
                   </div>
                   <Button type="submit" variant="outline" className="w-full">
